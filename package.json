@@ -1,12 +1,12 @@
 {
-    "name": "element-desktop",
-    "productName": "Element",
+    "name": "soc-connect",
+    "productName": "SOC Connect",
     "main": "lib/electron-main.js",
     "exports": "./lib/electron-main.js",
     "version": "1.11.108",
-    "description": "Element: the future of secure communication",
-    "author": "Element",
-    "homepage": "https://element.io",
+    "description": "SOC Connect: the future of secure communication",
+    "author": "SOC Connect",
+    "homepage": "https://chat.socjsc.com",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-im/element-desktop"
