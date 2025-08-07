@@ -1,11 +1,14 @@
 {
     "name": "soc-connect",
-    "productName": "SOC Connect",
+    "productName": "soc-connect",
     "main": "lib/electron-main.js",
     "exports": "./lib/electron-main.js",
     "version": "1.11.108",
     "description": "SOC Connect: the future of secure communication",
-    "author": "SOC Connect",
+    "author": {
+        "name": "SOC Connect",
+        "email": "quynh@xem.edu.vn"
+    },
     "homepage": "https://chat.socjsc.com",
     "repository": {
         "type": "git",
@@ -19,9 +22,10 @@
     },
     "build": {
         "appId": "com.soc.connect",
-        "productName": "SOC Connect",
+        "productName": "soc-connect",
         "files": [
             "lib/**/*",
+            "webapp/**/*",
             "webapp.asar"
         ],
         "directories": {
@@ -89,6 +93,7 @@
         "electron-store": "^10.0.0",
         "electron-window-state": "^5.0.3",
         "keytar-forked": "7.10.0",
+        "matrix-seshat": "^4.0.1",
         "minimist": "^1.2.6",
         "png-to-ico": "^2.1.8",
         "uuid": "^11.0.0"
