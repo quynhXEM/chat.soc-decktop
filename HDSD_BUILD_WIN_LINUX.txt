@@ -1,0 +1,99 @@
+# HƯỚNG DẪN BUILD APP ELECTRON CHO WINDOWS VÀ LINUX
+
+---
+
+## I. CHUẨN BỊ CHUNG
+
+### 1. Cài đặt các phần mềm cần thiết
+
+#### Trên cả Windows và Linux:
+- Node.js (LTS): https://nodejs.org/
+- Yarn:
+  npm install -g yarn
+- Python 3 (nên cài sẵn trên Linux, Windows thì tick "Add to PATH" khi cài)
+- Rust:
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  source $HOME/.cargo/env
+- Perl:
+  - Ubuntu: sudo apt-get install -y perl
+  - Windows: https://strawberryperl.com/
+- Git: https://git-scm.com/
+
+#### Chỉ trên Linux:
+sudo apt-get install -y build-essential pkg-config libssl-dev libgtk-3-dev libsecret-1-dev ruby ruby-dev
+sudo gem install --no-document fpm
+
+#### Chỉ trên Windows:
+- Visual Studio Build Tools 2022 (chọn "Desktop development with C++")
+- Mở terminal "x64 Native Tools Command Prompt for VS 2022" để build native module.
+
+---
+
+## II. BUILD APP CHO WINDOWS
+
+1. Build webapp.asar
+   yarn run asar-webapp
+2. Build native module
+   yarn run build:native
+3. Build app
+   yarn build
+   (File .exe sẽ nằm trong dist/win-unpacked/ hoặc file cài đặt trong dist/)
+4. Chạy app để kiểm tra log
+   Mở CMD, cd vào thư mục chứa .exe:
+   cd D:\REPO\element-desktop\dist\win-unpacked
+   .\ten-file-cua-ban.exe
+
+---
+
+## III. BUILD APP CHO LINUX
+
+1. Cài đủ các thư viện phụ thuộc (nếu chưa cài)
+   sudo apt-get install -y build-essential pkg-config libssl-dev libgtk-3-dev libsecret-1-dev ruby ruby-dev libnotify4 libnss3 libxss1 xdg-utils
+   sudo gem install --no-document fpm
+2. Build webapp.asar (nếu cần)
+   yarn run asar-webapp
+3. Build native module
+   yarn run build:native
+4. Build app (tạo file .deb, AppImage, ...)
+   yarn build
+   (File .deb hoặc .AppImage sẽ nằm trong thư mục dist/)
+5. Cài đặt file .deb
+   sudo dpkg -i dist/ten-file-cua-ban_*.deb
+   sudo apt-get install -f
+6. Chạy app để kiểm tra log
+   Nếu đã cài .deb:
+     ten-file-cua-ban
+   Nếu chạy từ thư mục build:
+     cd dist/linux-unpacked
+     ./ten-file-cua-ban
+
+---
+
+## IV. LƯU Ý QUAN TRỌNG
+- Luôn build webapp.asar trước khi build app.
+- Kiểm tra file webapp.asar có trong thư mục gốc dự án trước khi build.
+- Nếu build trên Windows, không build được file .deb, chỉ build được AppImage hoặc portable cho Linux.
+- Nếu build trên Linux, có thể build được cả .deb, .AppImage, .tar.gz...
+- Nếu gặp lỗi thiếu thư viện, đọc kỹ log và cài thêm gói được báo thiếu.
+- Nếu build native module lỗi, kiểm tra log Rust và cài đủ các thư viện dev.
+
+---
+
+## V. CẤU HÌNH package.json (ví dụ)
+
+"build": {
+  "files": [
+    "lib/**/*",
+    "webapp.asar"
+  ],
+  "extraResources": [
+    "webapp.asar"
+  ],
+  "win": { "target": ["nsis"] },
+  "linux": { "target": ["deb", "AppImage"], "category": "Network;InstantMessaging;Chat" },
+  "mac": { "target": ["dmg"] }
+}
+
+---
+
+Chúc bạn build thành công trên cả Windows và Linux! Nếu gặp lỗi, hãy kiểm tra log và gửi lại để được hỗ trợ chi tiết.
