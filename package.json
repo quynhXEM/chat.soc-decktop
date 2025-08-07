@@ -17,6 +17,32 @@
     "engines": {
         "node": ">=18.0.0"
     },
+    "build": {
+        "appId": "com.soc.connect",
+        "productName": "SOC Connect",
+        "files": [
+            "lib/**/*",
+            "webapp.asar"
+        ],
+        "directories": {
+            "buildResources": "build"
+        },
+        "win": {
+            "target": [
+                "nsis"
+            ]
+        },
+        "linux": {
+            "target": [
+                "AppImage"
+            ]
+        },
+        "mac": {
+            "target": [
+                "dmg"
+            ]
+        }
+    },
     "scripts": {
         "i18n": "matrix-gen-i18n && yarn i18n:sort && yarn i18n:lint",
         "i18n:sort": "jq --sort-keys '.' src/i18n/strings/en_EN.json > src/i18n/strings/en_EN.json.tmp && mv src/i18n/strings/en_EN.json.tmp src/i18n/strings/en_EN.json",

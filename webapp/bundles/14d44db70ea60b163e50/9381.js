@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunksoc_connect=self.webpackChunksoc_connect||[]).push([[9381],{"./src/modules.js":(c,s,e)=>{e.d(s,{INSTALLED_MODULES:()=>n});const n=[]}}]);
+//# sourceMappingURL=9381.js.map
