@@ -38,3 +38,4 @@ jobs:
         with:
           name: soc-connect-${{ matrix.os }}
           path: dist/
+
