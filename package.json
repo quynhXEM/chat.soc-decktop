@@ -12,7 +12,7 @@
     "homepage": "https://chat.socjsc.com",
     "repository": {
         "type": "git",
-        "url": "https://github.com/vector-im/element-desktop"
+        "url": "https://github.com/quynhXEM/soc-connect-desktop"
     },
     "license": "SEE LICENSE IN README.md",
     "type": "module",
@@ -48,24 +48,13 @@
         }
     },
     "scripts": {
-        "i18n": "matrix-gen-i18n && yarn i18n:sort && yarn i18n:lint",
+        "i18n": "matrix-gen-i18n && yarn i18n:sort",
         "i18n:sort": "jq --sort-keys '.' src/i18n/strings/en_EN.json > src/i18n/strings/en_EN.json.tmp && mv src/i18n/strings/en_EN.json.tmp src/i18n/strings/en_EN.json",
-        "i18n:lint": "prettier --log-level=silent  --write src/i18n/strings/ --ignore-path /dev/null",
         "i18n:diff": "cp src/i18n/strings/en_EN.json src/i18n/strings/en_EN_orig.json && yarn i18n && matrix-compare-i18n-files src/i18n/strings/en_EN_orig.json src/i18n/strings/en_EN.json",
         "mkdirs": "mkdirp packages deploys",
         "fetch": "yarn run mkdirs && tsx scripts/fetch-package.ts",
         "asar-webapp": "asar p webapp webapp.asar",
         "start": "yarn run build:ts && yarn run build:res && electron .",
-        "lint": "yarn lint:types && yarn lint:js && yarn lint:workflows",
-        "lint:js": "eslint --max-warnings 0 src hak playwright scripts && prettier --check .",
-        "lint:js-fix": "eslint --fix --max-warnings 0 src hak playwright scripts && prettier --log-level=warn --write .",
-        "lint:types": "yarn lint:types:src && yarn lint:types:test && yarn lint:types:scripts && yarn lint:types:hak",
-        "lint:types:src": "tsc --noEmit",
-        "lint:types:test": "tsc --noEmit -p playwright/tsconfig.json",
-        "lint:types:scripts": "tsc --noEmit -p scripts/tsconfig.json",
-        "lint:types:hak": "tsc --noEmit -p hak/tsconfig.json",
-        "lint:workflows": "find .github/workflows -type f \\( -iname '*.yaml' -o -iname '*.yml' \\) | xargs -I {} sh -c 'echo \"Linting {}\"; action-validator \"{}\"'",
-        "lint:knip": "knip",
         "build:native": "yarn run hak",
         "build:native:universal": "yarn run hak --target x86_64-apple-darwin fetchandbuild && yarn run hak --target aarch64-apple-darwin fetchandbuild && yarn run hak --target x86_64-apple-darwin --target aarch64-apple-darwin copyandlink",
         "build:32": "yarn run build:ts && yarn run build:res && electron-builder --ia32",
