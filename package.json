@@ -109,6 +109,7 @@
         "detect-libc": "^2.0.0",
         "electron": "37.2.3",
         "electron-builder": "^26.0.12",
+        "@electron/rebuild": "^4.0.1",
         "electron-builder-squirrel-windows": "26.0.12",
         "electron-devtools-installer": "^4.0.0",
         "eslint": "^9.32.0",
