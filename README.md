@@ -93,6 +93,7 @@ yarn run docker:install
 yarn run docker:build:native
 yarn run docker:build
 ```
+v1
 
 After running, the packages should be in `dist/`.
 
