@@ -1,6 +1,6 @@
 {
     "name": "soc-connect",
-    "productName": "soc-connect",
+    "productName": "SOC Connect",
     "main": "lib/electron-main.js",
     "exports": "./lib/electron-main.js",
     "version": "1.11.108",
@@ -22,7 +22,7 @@
     },
     "build": {
         "appId": "com.soc.connect",
-        "productName": "soc-connect",
+        "productName": "SOC Connect",
         "files": [
             "lib/**/*",
             "webapp/**/*",
