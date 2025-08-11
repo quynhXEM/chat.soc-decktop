@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunksoc_connect=self.webpackChunksoc_connect||[]).push([[3508],{"./src/effects/effect.ts":()=>{}}]);
