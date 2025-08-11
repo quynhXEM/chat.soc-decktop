@@ -136,7 +136,7 @@ const config: Omit<Writable<Configuration>, "electronFuses"> & {
         // XXX: we cannot specify this due to https://github.com/electron/osx-sign/issues/344
         // strictVerify: true,
         entitlements: "./build/entitlements.mac.plist",
-        icon: "build/icons/icon.icns",
+        icon: "build/icons/icon.ico",
         mergeASARs: true,
         x64ArchFiles: "**/matrix-seshat/*.node", // hak already runs lipo
     },
