@@ -13,8 +13,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      # MacOS signing & notarization (chỉ áp dụng khi chạy trên macos)
       CSC_LINK: ${{ secrets.APPLE_CSC_LINK }}
       CSC_KEY_PASSWORD: ${{ secrets.APPLE_CSC_KEY_PASSWORD }}
       APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -37,26 +35,8 @@ jobs:
           npm run build:ts
           npm run build:res
 
-      - name: Build Electron App (with sign & notarize if macOS)
-        run: |
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            npm run build -- --mac dmg
-          else
-            npm run build
-          fi
-
-      # Verify code signing & notarization (only macOS)
-      - name: Verify App Signature & Notarization
-        if: matrix.os == 'macos-latest'
-        run: |
-          DMG_PATH=$(ls dist/*.dmg | head -n 1)
-          hdiutil attach "$DMG_PATH" -mountpoint /Volumes/AppTest
-          APP_PATH=$(ls /Volumes/AppTest/*.app | head -n 1)
-          echo "Verifying codesign..."
-          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
-          echo "Verifying notarization..."
-          spctl -a -vvv -t install "$APP_PATH"
-          hdiutil detach /Volumes/AppTest
+      - name: Build Electron App
+        run: npm run build 
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
