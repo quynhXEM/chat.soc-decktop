@@ -38,14 +38,7 @@ jobs:
           npm run build:res
 
       - name: Build Electron App
-        run: |
-          if [ "${{ matrix.os }}" = "macos-latest" ]; then
-            npm run build -- --mac
-          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-            npm run build -- --win
-          else
-            npm run build -- --linux
-          fi
+        run: npm run build 
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
