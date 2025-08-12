@@ -14,6 +14,13 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
+      # MacOS signing & notarization (chỉ dùng khi chạy macos-latest)
+      CSC_LINK: ${{ secrets.APPLE_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.APPLE_CSC_KEY_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,11 +38,17 @@ jobs:
           npm run build:res
 
       - name: Build Electron App
-        run: npm run build
+        run: |
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            npm run build -- --mac
+          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+            npm run build -- --win
+          else
+            npm run build -- --linux
+          fi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: SOC Connect-${{ matrix.os }}
           path: dist/
-

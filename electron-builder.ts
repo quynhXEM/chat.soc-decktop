@@ -130,15 +130,17 @@ const config: Omit<Writable<Configuration>, "electronFuses"> & {
     },
     mac: {
         category: "public.app-category.social-networking",
+        target: ["dmg", "zip"],
         darkModeSupport: true,
         hardenedRuntime: true,
-        gatekeeperAssess: true,
+        gatekeeperAssess: false,
         // XXX: we cannot specify this due to https://github.com/electron/osx-sign/issues/344
         // strictVerify: true,
         entitlements: "./build/entitlements.mac.plist",
-        icon: "build/icons/icon.ico",
+        icon: "build/icons/icon.icns",
         mergeASARs: true,
         x64ArchFiles: "**/matrix-seshat/*.node", // hak already runs lipo
+        notarize: true
     },
     win: {
         target: ["squirrel", "msi"],
