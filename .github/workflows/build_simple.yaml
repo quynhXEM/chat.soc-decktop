@@ -26,23 +26,33 @@ jobs:
 
             - name: Download SOC Connect Web (custom)
               run: |
-                  mkdir -p packages
+                  echo "Creating directories..."
+                  mkdir -p packages deploys
+                  
+                  echo "Downloading webapp from custom repository..."
                   curl -L "https://github.com/quynhXEM/chat.socjsc.com/archive/refs/heads/main.tar.gz" -o packages/main.tar.gz
-                  mkdir -p deploys
+                  
+                  echo "Extracting webapp..."
                   tar -xzf packages/main.tar.gz -C deploys
                   
-                  # Find the extracted directory (should be chat.socjsc.com-main)
+                  echo "Finding webapp directory..."
                   WEBAPP_DIR=$(find deploys -name "chat.socjsc.com-*" -type d | head -n 1)
                   if [ -z "$WEBAPP_DIR" ]; then
                       echo "Could not find webapp directory"
+                      ls -la deploys/
                       exit 1
                   fi
                   
-                  # Copy config
+                  echo "Found webapp directory: $WEBAPP_DIR"
+                  
+                  echo "Copying config..."
                   cp webapp/config.json "$WEBAPP_DIR/config.json"
                   
-                  # Create asar package
-                  yarn asar p "$WEBAPP_DIR" webapp.asar
+                  echo "Creating asar package..."
+                  npx asar pack "$WEBAPP_DIR" webapp.asar
+                  
+                  echo "Webapp setup completed!"
+                  ls -la webapp.asar
 
             - name: Build TypeScript
               run: yarn run build:ts

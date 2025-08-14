@@ -1,0 +1,58 @@
+name: Build with Yarn Fetch
+on:
+    push:
+        branches: [main, master, develop]
+    pull_request:
+        branches: [main, master, develop]
+    workflow_dispatch:
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '18'
+                  cache: 'yarn'
+
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+
+            - name: Create directories manually
+              run: |
+                  mkdir -p packages deploys
+
+            - name: Download webapp using fetch script
+              run: |
+                  echo "Using fetch script to download webapp..."
+                  # Use tsx directly instead of yarn script to avoid mkdirp
+                  npx tsx scripts/fetch-package.ts --noverify --cfgdir webapp develop
+              env:
+                  NODE_OPTIONS: --max-old-space-size=4096
+
+            - name: Verify webapp.asar
+              run: |
+                  if [ -f webapp.asar ]; then
+                      echo "✅ webapp.asar created successfully"
+                      ls -la webapp.asar
+                  else
+                      echo "❌ webapp.asar not found"
+                      exit 1
+                  fi
+
+            - name: Build TypeScript
+              run: yarn run build:ts
+
+            - name: Copy resources
+              run: yarn run build:res
+
+            - name: Build Electron app
+              run: yarn run build
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
