@@ -61,9 +61,6 @@ jobs:
           echo "Git remote info:"
           git remote -v || echo "No git remotes found"
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
       - name: Fetch Element Web
         run: |
           echo "Fetching Element Web package..."
@@ -94,6 +91,15 @@ jobs:
         with:
           node-version-file: .node-version
           cache: "yarn"
+
+      - name: Check Node.js version
+        run: |
+          echo "Node.js version:"
+          node --version
+          echo "npm version:"
+          npm --version
+          echo "yarn version:"
+          yarn --version
 
       - name: Install Dependencies
         run: |
