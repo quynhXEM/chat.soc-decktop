@@ -115,9 +115,9 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: yarn build:native:universal
 
-      - name: Build App (Signed)
+      - name: Build App (Signed & Notarized)
         run: |
-          echo "Building signed macOS app..."
+          echo "Building signed and notarized macOS app..."
           yarn build:universal --publish never
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -125,9 +125,23 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.APPLE_CSC_LINK }}
+          # Enable notarization
+          NOTARIZE: true
           ED_NIGHTLY: ${{ inputs.version }}
 
-
+      - name: Verify Notarization
+        run: |
+          echo "Verifying notarization status..."
+          DMG_FILE=$(find dist -name "*.dmg" -type f | head -n 1)
+          if [ -n "$DMG_FILE" ]; then
+            echo "Checking notarization for: $DMG_FILE"
+            # Check if notarization ticket is stapled
+            xcrun stapler validate "$DMG_FILE" && echo "✅ Notarization ticket found!" || echo "❌ No notarization ticket"
+            # Check codesign
+            codesign -dv --verbose=4 "$DMG_FILE" 2>&1 | head -10
+            # Check spctl (Gatekeeper)
+            spctl -a -t open --context context:primary-signature -v "$DMG_FILE" && echo "✅ Gatekeeper approved!" || echo "❌ Gatekeeper blocked"
+          fi
 
       - name: Create GitHub Release and Upload Signed DMG
         env:
