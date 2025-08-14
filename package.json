@@ -32,6 +32,7 @@
             "buildResources": "build"
         },
         "win": {
+            "sign": false,
             "target": [
                 "nsis"
             ]
