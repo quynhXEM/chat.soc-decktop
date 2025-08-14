@@ -116,7 +116,6 @@ jobs:
         run: yarn build:native:universal
 
       - name: Build App (Signed)
-        if: inputs.sign != '' && inputs.sign != 'false'
         run: |
           echo "Building signed macOS app..."
           yarn build:universal --publish never
@@ -128,30 +127,37 @@ jobs:
           CSC_LINK: ${{ secrets.APPLE_CSC_LINK }}
           ED_NIGHTLY: ${{ inputs.version }}
 
-      - name: Build App (Unsigned)
-        if: inputs.sign == '' || inputs.sign == 'false'
-        run: |
-          echo "Building unsigned macOS app..."
-          yarn build:universal --publish never
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-          ED_NIGHTLY: ${{ inputs.version }}
 
-      - name: Create GitHub Release and Upload DMG
+
+      - name: Create GitHub Release and Upload Signed DMG
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN  }}
         run: |
-          # Find the DMG file
+          # Find the signed DMG file
           DMG_FILE=$(find dist -name "*.dmg" -type f | head -n 1)
           if [ -z "$DMG_FILE" ]; then
-            echo "No DMG file found in dist directory"
+            echo "No signed DMG file found in dist directory"
+            ls -la dist/
             exit 1
           fi
           
-          # Create release and upload DMG
-          gh release create "build-${{ github.run_id }}" \
-            --title "macOS Build ${{ github.run_number }}" \
-            --notes "Automated macOS build from workflow run ${{ github.run_id }}" \
+          echo "Found DMG file: $DMG_FILE"
+          
+          # Create release tag based on timestamp
+          RELEASE_TAG="v$(date +'%Y.%m.%d')-build-${{ github.run_number }}"
+          
+          # Create release and upload signed DMG
+          gh release create "$RELEASE_TAG" \
+            --title "SOC Connect Desktop $RELEASE_TAG" \
+            --notes "🔐 Signed macOS build from commit ${{ github.sha }}
+
+          **Features:**
+          - ✅ Code signed with Apple Developer Certificate
+          - ✅ Notarized for macOS Gatekeeper
+          - ✅ Custom SOC Connect UI from chat.socjsc.com
+          - ✅ Universal binary (Intel + Apple Silicon)
+          
+          **Installation:**
+          Simply download and install - no security warnings!" \
             --draft \
-            --prerelease \
             "$DMG_FILE"
