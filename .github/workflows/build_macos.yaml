@@ -38,6 +38,7 @@ on:
 
 permissions: {} # No permissions required
 
+
 jobs:
   build:
     runs-on: macos-14
