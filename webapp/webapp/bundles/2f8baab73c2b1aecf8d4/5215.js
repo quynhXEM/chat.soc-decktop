@@ -1,0 +1,1 @@
+(self.webpackChunksoc_connect=self.webpackChunksoc_connect||[]).push([[5215],{"./src/effects/ICanvasEffect.ts":()=>{}}]);
