@@ -1,166 +1,156 @@
 on:
-    workflow_dispatch:
-        secrets:
-            APPLE_ID:
-                required: false
-            APPLE_ID_PASSWORD:
-                required: false
-            APPLE_TEAM_ID:
-                required: false
-            APPLE_CSC_KEY_PASSWORD:
-                required: false
-            APPLE_CSC_LINK:
-                required: false
-        inputs:
-            version:
-                type: string
-                required: false
-                description: "Version string to override the one in package.json, used for non-release builds"
-            sign:
-                type: string
-                required: false
-                description: "Whether to sign & notarise the build, requires 'packages.element.io' environment"
-            base-url:
-                type: string
-                required: false
-                description: "The URL to which the output will be deployed."
-            blob_report:
-                type: boolean
-                required: false
-                description: "Whether to run the blob report"
+  workflow_dispatch:
+    secrets:
+      APPLE_ID:
+        required: false
+      APPLE_ID_PASSWORD:
+        required: false
+      APPLE_TEAM_ID:
+        required: false
+      APPLE_CSC_KEY_PASSWORD:
+        required: false
+      APPLE_CSC_LINK:
+        required: false
+    inputs:
+      version:
+        type: string
+        required: false
+        description: "Version override"
+      sign:
+        type: string
+        required: false
+        description: "Sign & notarize build"
+      base-url:
+        type: string
+        required: false
+        description: "URL for auto-update"
+      blob_report:
+        type: boolean
+        required: false
+
 permissions: {}
+
 jobs:
-    build:
-        runs-on: macos-14
-        environment: packages.element.io
-        steps:
-            - uses: actions/checkout@v4
+  build:
+    runs-on: macos-14
+    environment: packages.element.io
+    steps:
+      - uses: actions/checkout@v4
 
-            - uses: actions/download-artifact@v4
-              with:
-                  name: webapp
+      - uses: actions/download-artifact@v4
+        with:
+          name: webapp
 
-            - name: Cache .hak
-              id: cache
-              uses: actions/cache@v4
-              with:
-                  key: ${{ runner.os }}-${{ hashFiles('hakHash', 'electronVersion') }}
-                  path: |
-                      ./.hak
+      - name: Cache .hak
+        id: cache
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-${{ hashFiles('hakHash', 'electronVersion') }}
+          path: ./.hak
 
-            - name: Install Rust
-              if: steps.cache.outputs.cache-hit != 'true'
-              run: |
-                  rustup toolchain install stable --profile minimal --no-self-update
-                  rustup default stable
-                  rustup target add aarch64-apple-darwin
-                  rustup target add x86_64-apple-darwin
+      - name: Install Rust
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
-            - uses: actions/setup-python@v5
-              with:
-                  python-version: "3.13"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
-            - uses: actions/setup-node@v4
-              with:
-                  node-version-file: .node-version
-                  cache: "yarn"
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: "yarn"
 
-            - name: Install Deps
-              run: "yarn install --frozen-lockfile"
+      - name: Install Deps
+        run: yarn install --frozen-lockfile
 
-            - name: Install setuptools
-              run: pip3 install setuptools
+      - name: Install setuptools
+        run: pip3 install setuptools
 
-            - name: Build Natives
-              if: steps.cache.outputs.cache-hit != 'true'
-              run: yarn build:native:universal
+      - name: Build Natives
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: yarn build:native:universal
 
-            - name: "[Signed] Build App"
-              run: |
-                  yarn build:universal --publish never
-              env:
-                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-                  APPLE_ID: ${{ secrets.APPLE_ID }}
-                  APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-                  CSC_KEY_PASSWORD: ${{ secrets.APPLE_CSC_KEY_PASSWORD }}
-                  CSC_LINK: ${{ secrets.APPLE_CSC_LINK }}
-                  ED_NIGHTLY: ${{ inputs.version }}
+      - name: Build App (unsigned)
+        run: yarn build:universal --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
-            - name: Re-sign native modules (keytar)
-              if: inputs.sign != ''
-              run: |
-                  find dist/mac -name "*.node" -exec codesign --force --sign "$APPLE_TEAM_ID" {} \;
+      # Sign all nested binaries + main app
+      - name: Code sign all binaries
+        if: inputs.sign != ''
+        run: |
+          APP_PATH="dist/mac/SOC Connect.app"
+          find "$APP_PATH" -type f \( -perm +111 -o -name "*.dylib" -o -name "*.node" \) \
+            -exec codesign --force --options runtime \
+              --entitlements build/entitlements.mac.plist \
+              --sign "Developer ID Application: $APPLE_TEAM_ID" {} \;
+          codesign --deep --force --options runtime \
+            --entitlements build/entitlements.mac.plist \
+            --sign "Developer ID Application: $APPLE_TEAM_ID" \
+            "$APP_PATH"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-            # Zip app before notarization
-            - name: Prepare zip for notarization
-              if: inputs.sign != ''
-              run: |
-                  ditto -c -k --keepParent "dist/mac/SOC Connect.app" "dist/mac/SOC Connect.zip"
+      # Create zip from signed app for notarization
+      - name: Prepare zip for notarization
+        if: inputs.sign != ''
+        run: |
+          ditto -c -k --keepParent "dist/mac/SOC Connect.app" "dist/mac/SOC Connect.zip"
 
-            - name: Notarize app with Apple
-              if: inputs.sign != ''
-              env:
-                  APPLE_ID: ${{ secrets.APPLE_ID }}
-                  APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-              run: |
-                  xcrun notarytool submit "dist/mac/SOC Connect.zip" \
-                    --apple-id "$APPLE_ID" \
-                    --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-                    --team-id "$APPLE_TEAM_ID" \
-                    --wait \
-                    --verbose
+      # Submit for notarization
+      - name: Notarize app with Apple
+        if: inputs.sign != ''
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun notarytool submit "dist/mac/SOC Connect.zip" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
 
-            - name: Staple notarization ticket
-              if: inputs.sign != ''
-              run: |
-                  xcrun stapler staple "dist/mac/SOC Connect.app"
+      # Staple ticket to app
+      - name: Staple notarization ticket
+        if: inputs.sign != ''
+        run: xcrun stapler staple "dist/mac/SOC Connect.app"
 
-            - name: Check app was signed & notarised successfully
-              if: inputs.sign != ''
-              run: |
-                  codesign -dv --verbose=4 "dist/mac/SOC Connect.app"
-                  spctl -a -vvv -t install "dist/mac/SOC Connect.app"
+      # Create DMG after staple
+      - name: Create DMG
+        if: inputs.sign != ''
+        run: |
+          yarn electron-builder --mac dmg --dir=false --publish never
 
-            - name: "[Unsigned] Build App"
-              if: inputs.sign == ''
-              run: |
-                  yarn build:universal --publish never
-              env:
-                  CSC_IDENTITY_AUTO_DISCOVERY: false
+      - name: Check app was signed & notarised successfully
+        if: inputs.sign != ''
+        run: |
+          codesign -dv --verbose=4 "dist/mac/SOC Connect.app"
+          spctl -a -vvv -t install "dist/mac/SOC Connect.app"
 
-            - name: Generate releases.json
-              if: inputs.base-url
-              run: |
-                  PKG_JSON_VERSION=$(cat package.json | jq -r .version)
-                  LATEST=$(find dist -type f -iname "*-mac.zip" | xargs -0 -n1 -- basename)
-                  URL="${{ inputs.base-url }}/update/macos/${LATEST// /%20}"
-                  jq -n --arg version "${VERSION:-$PKG_JSON_VERSION}" --arg url "$URL" '
-                    {
-                      currentRelease: $version,
-                      releases: [{
-                        version: $version,
-                        updateTo: {
-                          version: $version,
-                          url: $url,
-                        },
-                      }],
-                    }
-                  ' > dist/releases.json
-                  jq -n --arg url "$URL" '{ url: $url }' > dist/releases-legacy.json
-              env:
-                  VERSION: ${{ inputs.version }}
+      # Generate releases.json for auto-update
+      - name: Generate releases.json
+        if: inputs.base-url
+        run: |
+          PKG_JSON_VERSION=$(jq -r .version package.json)
+          LATEST=$(find dist -type f -iname "*-mac.zip" -print -quit | xargs basename)
+          URL="${{ inputs.base-url }}/update/macos/${LATEST// /%20}"
+          jq -n --arg version "${VERSION:-$PKG_JSON_VERSION}" --arg url "$URL" \
+            '{currentRelease: $version, releases: [{version: $version, updateTo: {version: $version, url: $url}}]}' \
+            > dist/releases.json
+          jq -n --arg url "$URL" '{url: $url}' > dist/releases-legacy.json
+        env:
+          VERSION: ${{ inputs.version }}
 
-            - name: Upload Artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: macos
-                  path: |
-                      dist
-                      !dist/mac-universal/**
-                  retention-days: 1
-
-            - name: Assert all required files are present
-              run: |
-                  test -f ./dist/Element*.dmg
-                  test -f ./dist/Element*-mac.zip
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: |
+            dist
+            !dist/mac-universal/**
+          retention-days: 1
