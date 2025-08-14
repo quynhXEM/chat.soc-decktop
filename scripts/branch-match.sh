@@ -4,8 +4,8 @@
 
 set -x
 
-deforg="element-hq"
-defrepo="element-web"
+deforg="quynhXEM"
+defrepo="chat.socjsc.com"
 
 # The PR_NUMBER variable must be set explicitly.
 default_org_repo=${GITHUB_REPOSITORY:-"$deforg/$defrepo"}
@@ -23,6 +23,19 @@ clone() {
         # Disable auth prompts: https://serverfault.com/a/665959
         GIT_TERMINAL_PROMPT=0 git clone https://github.com/$org/$repo.git $repo --branch "$branch" --depth 1 && exit 0
     fi
+}
+
+# Fallback function to try different repositories if the primary one fails
+clone_with_fallback() {
+    local branch=$1
+    
+    # Try quynhXEM/chat.socjsc.com first (custom repo)
+    clone "quynhXEM" "$defrepo" "$branch" || \
+    # Fallback to main branch if specific branch doesn't exist
+    clone "quynhXEM" "$defrepo" "main" || \
+    # Final fallback to vector-im/element-web if custom repo fails
+    clone "vector-im" "element-web" "master" || \
+    clone "vector-im" "element-web" "main"
 }
 
 echo "Getting info about a PR with number $PR_NUMBER"
@@ -43,6 +56,8 @@ if [[ "$head" == *":"* ]]; then
     fi
     TRY_BRANCH=${BRANCH_ARRAY[1]}
 fi
-clone "$TRY_ORG" "$defrepo" "$TRY_BRANCH"
+
+# Try with fallback mechanism
+clone_with_fallback "$TRY_BRANCH"
 
 exit 1

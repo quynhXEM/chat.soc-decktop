@@ -1,5 +1,5 @@
-*                         @element-hq/element-web-reviewers
-/.github/workflows/**     @element-hq/element-web-team
-/package.json             @element-hq/element-web-team
-/yarn.lock                @element-hq/element-web-team
+*                         @quynhXEM
+/.github/workflows/**     @quynhXEM
+/package.json             @quynhXEM
+/yarn.lock                @quynhXEM
 /src/i18n/strings

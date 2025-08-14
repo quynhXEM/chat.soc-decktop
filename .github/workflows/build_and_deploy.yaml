@@ -219,7 +219,7 @@ jobs:
               uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3
               with:
                   token: ${{ secrets.ELEMENT_BOT_TOKEN }}
-                  repository: element-hq/packages.element.io
+                  repository: vector-im/packages.element.io
                   event-type: packages-index
 
             - name: Find debs
@@ -243,7 +243,7 @@ jobs:
                       ${{ steps.deb.outputs.arm64 }}
 
             - name: Publish amd64 deb to packages.element.io
-              uses: element-hq/packages.element.io@master
+              uses: vector-im/packages.element.io@master
               if: needs.prepare.outputs.deploy == 'true' && needs.linux.result == 'success'
               with:
                   file: ${{ steps.deb.outputs.amd64 }}
@@ -253,7 +253,7 @@ jobs:
                   bucket-access-key: ${{ secrets.CF_R2_TOKEN }}
 
             - name: Publish arm64 deb to packages.element.io
-              uses: element-hq/packages.element.io@master
+              uses: vector-im/packages.element.io@master
               if: needs.prepare.outputs.deploy == 'true' && needs.linux.result == 'success'
               with:
                   file: ${{ steps.deb.outputs.arm64 }}

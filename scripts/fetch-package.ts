@@ -11,8 +11,8 @@ import riotDesktopPackageJson from "../package.json";
 import { setPackageVersion } from "./set-version.js";
 
 const PUB_KEY_URL = "https://packages.riot.im/element-release-key.asc";
-const PACKAGE_URL_PREFIX = "https://github.com/element-hq/element-web/releases/download/";
-const DEVELOP_TGZ_URL = "https://develop.element.io/develop.tar.gz";
+const PACKAGE_URL_PREFIX = "https://github.com/quynhXEM/chat.socjsc.com/releases/download/";
+const DEVELOP_TGZ_URL = "https://github.com/quynhXEM/chat.socjsc.com/archive/refs/heads/main.tar.gz";
 const ASAR_PATH = "webapp.asar";
 
 async function downloadToFile(url: string, filename: string): Promise<void> {
