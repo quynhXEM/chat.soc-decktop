@@ -53,12 +53,23 @@ jobs:
       - name: Build Electron App
         run: npm run build
 
+      - name: Find build file
+        id: find_file
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            FILE=$(ls dist/*.exe | head -n 1)
+          else
+            FILE=$(ls dist/*.AppImage | head -n 1)
+          fi
+          echo "file=$FILE" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: Upload build to GitHub Release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: dist
-          asset_name: ${{ matrix.os }}-build-${{ github.run_number }}.zip
+          asset_path: ${{ steps.find_file.outputs.file }}
+          asset_name: ${{ matrix.os }}-build-${{ github.run_number }}.${{ steps.find_file.outputs.file##*. }}
           asset_content_type: application/octet-stream
