@@ -104,7 +104,7 @@ jobs:
       - name: Fetch Element Web
         run: |
           echo "Fetching Element Web package..."
-          yarn run fetch --noverify --cfgdir ""
+          yarn run fetch --noverify --cfgdir "" develop
           echo "Creating webapp.asar..."
           yarn run asar-webapp
 
