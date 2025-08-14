@@ -32,7 +32,7 @@
             "buildResources": "build"
         },
         "win": {
-            "sign": false,
+            "forceCodeSigning": false,
             "target": [
                 "nsis"
             ]
