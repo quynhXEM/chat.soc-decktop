@@ -9,7 +9,6 @@ defaults:
     run:
         shell: powershell
 on:
-    workflow_dispatch:
     workflow_call:
         secrets:
             ESIGNER_USER_NAME:
@@ -42,9 +41,6 @@ jobs:
         environment: ${{ inputs.sign && 'packages.element.io' || '' }}
         env:
             SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x86/signtool.exe"
-            CSC_IDENTITY_AUTO_DISCOVERY: false
-            WIN_CSC_LINK: ""
-            WIN_CSC_KEY_PASSWORD: ""
         steps:
             - uses: nbucic/variable-mapper@0673f6891a0619ba7c002ecfed0f9f4f39017b6f
               id: config
@@ -147,7 +143,6 @@ jobs:
                   yarn build:native --target ${{ steps.config.outputs.target }}
 
             - name: Install and configure eSigner CKA
-              if: inputs.sign != ''
               run: |
                   Set-StrictMode -Version 'Latest'
 
@@ -203,7 +198,6 @@ jobs:
                   Import-Certificate -CertStoreLocation Cert:\LocalMachine\Root -FilePath .github/SSLcom-sandbox.crt
 
             - name: Check app was signed successfully
-              if: inputs.sign != ''
               run: |
                   Set-StrictMode -Version 'Latest'
                   Get-ChildItem `
