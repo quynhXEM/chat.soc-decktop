@@ -36,7 +36,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-permissions: {} # No permissions required
+permissions:
+  contents: write
+  packages: write
+  actions: read
 
 
 jobs:
@@ -136,7 +139,7 @@ jobs:
 
       - name: Create GitHub Release and Upload DMG
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           # Find the DMG file
           DMG_FILE=$(find dist -name "*.dmg" -type f | head -n 1)
