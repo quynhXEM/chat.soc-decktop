@@ -31,6 +31,10 @@ on:
         type: boolean
         required: false
         description: "Whether to run the blob report"
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
 
 permissions: {} # No permissions required
 
@@ -41,9 +45,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: webapp
+      - name: Debug Repository Information
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Repository Owner: ${{ github.repository_owner }}"
+          echo "Repository Name: ${{ github.event.repository.name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Current directory: $(pwd)"
+          echo "Repository contents:"
+          ls -la
+          echo "Git remote info:"
+          git remote -v || echo "No git remotes found"
+
+      - name: Fetch Element Web
+        run: |
+          echo "Fetching Element Web package..."
+          yarn run fetch --noverify --cfgdir ""
+          echo "Creating webapp.asar..."
+          yarn run asar-webapp
 
       - name: Cache .hak
         id: cache
@@ -69,24 +91,37 @@ jobs:
           node-version-file: .node-version
           cache: "yarn"
 
-      - name: Install Deps
-        run: yarn install --frozen-lockfile
-
-      - name: Install setuptools
-        run: pip3 install setuptools
+      - name: Install Dependencies
+        run: |
+          echo "Installing Node.js dependencies..."
+          yarn install --frozen-lockfile
+          echo "Installing Python setuptools..."
+          pip3 install setuptools
 
       - name: Build Natives
         if: steps.cache.outputs.cache-hit != 'true'
         run: yarn build:native:universal
 
-      - name: "[Signed] Build App"
-        run: yarn build:universal --publish never
+      - name: Build App (Signed)
+        if: inputs.sign != '' && inputs.sign != 'false'
+        run: |
+          echo "Building signed macOS app..."
+          yarn build:universal --publish never
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.APPLE_CSC_LINK }}
+          ED_NIGHTLY: ${{ inputs.version }}
+
+      - name: Build App (Unsigned)
+        if: inputs.sign == '' || inputs.sign == 'false'
+        run: |
+          echo "Building unsigned macOS app..."
+          yarn build:universal --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
           ED_NIGHTLY: ${{ inputs.version }}
 
       - name: Create GitHub Release and Upload DMG
