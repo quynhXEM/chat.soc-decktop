@@ -6,7 +6,27 @@ on:
   pull_request:
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          tag_name: build-${{ github.run_id }}
+          release_name: "Build ${{ github.run_number }}"
+          draft: true
+          prerelease: true
+
   build:
+    needs: create-release
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -33,9 +53,12 @@ jobs:
       - name: Build Electron App
         run: npm run build
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload build to GitHub Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          name: SOC Connect-${{ matrix.os }}
-          path: dist/
-
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: dist/*
+          asset_name: ${{ matrix.os }}-build-${{ github.run_number }}.zip
+          asset_content_type: application/octet-stream
