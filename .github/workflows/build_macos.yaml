@@ -125,22 +125,37 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.APPLE_CSC_LINK }}
-          # Enable notarization
+          # Enable notarization with wait
           NOTARIZE: true
+          NOTARIZE_WAIT: true
           ED_NIGHTLY: ${{ inputs.version }}
 
-      - name: Verify Notarization
+      - name: Manual Stapling and Verification
         run: |
-          echo "Verifying notarization status..."
+          echo "Manual stapling and verification..."
           DMG_FILE=$(find dist -name "*.dmg" -type f | head -n 1)
           if [ -n "$DMG_FILE" ]; then
-            echo "Checking notarization for: $DMG_FILE"
-            # Check if notarization ticket is stapled
+            echo "Found DMG: $DMG_FILE"
+            
+            # Try manual stapling (in case electron-builder didn't do it)
+            echo "Attempting manual stapling..."
+            xcrun stapler staple "$DMG_FILE" || echo "Stapling failed or already stapled"
+            
+            # Verify notarization
+            echo "Verifying notarization..."
             xcrun stapler validate "$DMG_FILE" && echo "✅ Notarization ticket found!" || echo "❌ No notarization ticket"
-            # Check codesign
+            
+            # Check codesign details
+            echo "Checking code signature..."
             codesign -dv --verbose=4 "$DMG_FILE" 2>&1 | head -10
-            # Check spctl (Gatekeeper)
+            
+            # Test Gatekeeper
+            echo "Testing Gatekeeper..."
             spctl -a -t open --context context:primary-signature -v "$DMG_FILE" && echo "✅ Gatekeeper approved!" || echo "❌ Gatekeeper blocked"
+            
+            # Check for quarantine attributes
+            echo "Checking quarantine attributes..."
+            xattr -l "$DMG_FILE" | grep quarantine || echo "✅ No quarantine attributes"
           fi
 
       - name: Create GitHub Release and Upload Signed DMG
